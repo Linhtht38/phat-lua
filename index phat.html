@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title> 5 cặp số may mắn </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 16px;
+      background: #020617;          /* nền ngoài rất tối */
+      color: #e5e7eb;               /* chữ sáng */
+    }
+    h1 {
+      font-size: 20px;
+      text-align: center;
+      color: #f9fafb;
+    }
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #0b1120;          /* hộp chính tối */
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      border: 1px solid #1e293b;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;          /* xanh dương đậm */
+      color: white;
+      font-weight: 600;
+    }
+    button:disabled {
+      background: #4b5563;          /* xám khi disable */
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .pairs {
+      margin-top: 16px;
+    }
+    .pair-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #1f2933;
+      font-size: 16px;
+    }
+    .pair-name {
+      font-weight: 500;
+      color: #e5e7eb;
+    }
+    .pair-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #facc15;               /* vàng cho nổi số */
+    }
+    .pair-time {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .banned {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #e5e7eb;
+    }
+    .log {
+      margin-top: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      background: #020617;
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid #1e293b;
+      white-space: pre-wrap;
+      color: #e5e7eb;
+    }
+
+    /* ====== SHIBA LẮC + PHÓNG TO/THU NHỎ ====== */
+    .shiba-scene {
+      position: relative;
+      margin-bottom: 16px;
+      padding: 14px 12px 20px;
+      border-radius: 16px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      overflow: visible;
+    }
+
+    .shiba-dog-wrapper {
+      position: relative;
+      width: 200px;
+      transform-origin: 50% 100%;
+      animation:
+        shiba-sway 1.7s ease-in-out infinite,
+        shiba-pulse 2.4s ease-in-out infinite;
+      cursor: pointer;
+    }
+
+    .shiba-dog-wrapper:hover {
+      animation-duration: 1.2s, 1.8s;  /* hover lắc nhanh & phóng nhanh hơn */
+    }
+
+    .shiba-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.7));
+    }
+
+    .shiba-speech {
+      position: absolute;
+      top: -36px;
+      right: -20px;
+      max-width: 170px;
+      background: #ffffff;
+      color: #111827;
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.3;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      animation: shiba-float 3s ease-in-out infinite;
+    }
+
+    .shiba-speech::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 18px;
+      border-width: 10px 10px 0 10px;
+      border-style: solid;
+      border-color: #ffffff transparent transparent transparent;
+    }
+
+    .shiba-subtitle {
+      position: absolute;
+      bottom: 6px;
+      left: 12px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    @keyframes shiba-sway {
+      0%   { transform: rotate(0deg); }
+      20%  { transform: rotate(-6deg); }
+      40%  { transform: rotate(4deg); }
+      60%  { transform: rotate(-3deg); }
+      80%  { transform: rotate(2deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    @keyframes shiba-pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shiba-float {
+      0%   { transform: translateY(0); opacity: 1; }
+      50%  { transform: translateY(-5px); opacity: 0.95; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 480px) {
+      .shiba-dog-wrapper {
+        width: 170px;
+      }
+      .shiba-speech {
+        right: -4px;
+        top: -30px;
+        max-width: 150px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- KHUNG SHIBA -->
+  <div class="shiba-scene">
+    <div class="shiba-dog-wrapper" title="Tập gym đi 😏">
+      <!-- Đổi 'shiba.png' đúng với tên file ảnh của bạn -->
+      <img src="shiba.png" alt="Shiba nhìn đểu" class="shiba-img" />
+      <div class="shiba-speech">
+        Lấy tô bắt đầu <br>phát số nè
+      </div>
+    </div>
+    <div class="shiba-subtitle">
+      Bền tỉnh thôi 
+    </div>
+  </div>
+
+  <!-- PHẦN APP 5 CẶP SỐ GIỮ NGUYÊN -->
+  <h1>BẮT ĐẦU PHÁT LỘC NHÉ ANH ZAI</h1>
+
+  <button id="startBtn">BẮT ĐẦU PHÁT LỘC </button>
+
+  <div class="status" id="statusText">Nhấn "BẮT ĐẦU PHÁT LỘC" để lấy 5 cặp số.</div>
+  <div class="banned" id="bannedText">Số đầu đã khóa: (chưa có)</div>
+
+  <div class="pairs" id="pairsContainer"></div>
+
+  <div class="log" id="logBox"></div>
+</div>
+
+<script>
+  const totalPairs = 5;
+  const totalDuration = 13_000; // ms
+
+  const startBtn = document.getElementById('startBtn');
+  const statusText = document.getElementById('statusText');
+  const bannedText = document.getElementById('bannedText');
+  const pairsContainer = document.getElementById('pairsContainer');
+  const logBox = document.getElementById('logBox');
+
+  let usedPairs = new Set();
+  let bannedFirstDigits = new Set();
+  let results = [];
+  let startTime = null;
+  let timeouts = [];
+
+  function log(msg) {
+    const t = new Date().toLocaleTimeString();
+    logBox.textContent += `[${t}] ${msg}\n`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  function resetState() {
+    usedPairs.clear();
+    bannedFirstDigits.clear();
+    results = [];
+    startTime = Date.now();
+    pairsContainer.innerHTML = '';
+    bannedText.textContent = 'Số đầu đã khóa: (chưa có)';
+    logBox.textContent = '';
+    timeouts.forEach(id => clearTimeout(id));
+    timeouts = [];
+  }
+
+  function updateUI() {
+    const sorted = [...results].sort((a, b) => a.time - b.time);
+    pairsContainer.innerHTML = '';
+    sorted.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'pair-row';
+
+      const left = document.createElement('div');
+      left.className = 'pair-name';
+      left.textContent = item.name;
+
+      const mid = document.createElement('div');
+      mid.className = 'pair-value';
+      mid.textContent = item.value;
+
+      const right = document.createElement('div');
+      right.className = 'pair-time';
+      right.textContent = `${item.time.toFixed(2)} s`;
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+      pairsContainer.appendChild(row);
+    });
+
+    if (bannedFirstDigits.size > 0) {
+      const arr = Array.from(bannedFirstDigits).sort((a, b) => a - b);
+      bannedText.textContent = 'Số đầu đã khóa: ' + arr.join(', ');
+    } else {
+      bannedText.textContent = 'Số đầu đã khóa: (chưa có)';
+    }
+  }
+
+  function generatePair(name) {
+    if (results.length >= totalPairs) return;
+
+    while (true) {
+      const allowedFirst = [];
+      for (let d = 0; d <= 9; d++) {
+        if (!bannedFirstDigits.has(d)) allowedFirst.push(d);
+      }
+      if (allowedFirst.length === 0) {
+        log(`${name}: Không còn số đầu hợp lệ, dừng.`);
+        return;
+      }
+
+      const a = allowedFirst[Math.floor(Math.random() * allowedFirst.length)];
+      const b = Math.floor(Math.random() * 10);
+      const pair = `${a}${b}`;
+
+      if (usedPairs.has(pair)) {
+        log(`${name}: bị trùng cặp ${pair}, random lại...`);
+        continue;
+      }
+
+      usedPairs.add(pair);
+      bannedFirstDigits.add(a);
+
+      const elapsed = (Date.now() - startTime) / 1000;
+      const item = { name, value: pair, time: elapsed };
+      results.push(item);
+
+      log(`${name}: cặp ${pair} (sau ${elapsed.toFixed(2)} giây) → khóa số đầu ${a}`);
+
+      updateUI();
+      break;
+    }
+  }
+
+  function startRun() {
+    resetState();
+    startBtn.disabled = true;
+    startBtn.textContent = 'ĐANG PHÁT...';
+    statusText.textContent = 'Đang Phát...';
+
+    const delays = [];
+    for (let i = 0; i < totalPairs; i++) {
+      delays.push(Math.random() * totalDuration);
+    }
+    delays.sort((a, b) => a - b);
+
+    for (let i = 0; i < totalPairs; i++) {
+      const name = `Cặp ${i + 1}`;
+      const delay = delays[i];
+      const id = setTimeout(() => {
+        generatePair(name);
+        if (i === totalPairs - 1) {
+          statusText.textContent = 'Đã Phát xong 5 cặp.';
+          startBtn.disabled = false;
+          startBtn.textContent = 'BẮT ĐẦU KHẤN';
+        }
+      }, delay);
+      timeouts.push(id);
+    }
+  }
+
+  startBtn.addEventListener('click', startRun);
+</script>
+</body>
+</html>
