@@ -213,6 +213,11 @@
       return arr.map(n => String(n).padStart(2, "0")).join(" ");
     }
 
+    function normalizeText(s) {
+      if (typeof s !== "string") return "";
+      return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
+
     async function fetchExcel(url) {
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`Tải Excel lỗi (${resp.status})`);
@@ -230,7 +235,8 @@
       let start = -1;
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i] || [];
-        if (r[0] === "Káº¿t quáº£ XSMT" && String(r[1]).trim() === target) {
+        const cellNorm = normalizeText(r[0]);
+        if (cellNorm.startsWith("ket qua xsmt") && String(r[1]).trim() === target) {
           start = i;
           break;
         }
@@ -240,8 +246,9 @@
       const nums = [];
       for (let i = start + 2; i < rows.length; i++) {
         const r = rows[i] || [];
-        if (r[0] === "Káº¿t quáº£ XSMT") break;
-        if (r[0] === "ÄB") continue; // bá» dÃ²ng nhÃ£n ÄB, sá»‘ Ä‘Ã£ náº±m á»Ÿ dÃ²ng ngay trÆ°á»›c Ä‘Ã³
+        const cellNorm = normalizeText(r[0]);
+        if (cellNorm.startsWith("ket qua xsmt")) break;
+        if (cellNorm === "db") continue; // bỏ dòng nhãn ĐB, số đã nằm ở dòng ngay trước đó
         for (let c = 1; c < r.length; c++) {
           const v = r[c];
           if (v === undefined || v === null || v === "") continue;
@@ -252,9 +259,9 @@
       return nums;
     }
 
-    // Core logic: táº§n suáº¥t 3 ngÃ y (manual-only)
+    // Core logic: tần suất 3 ngày (manual-only)
     function pick5ByFreq3Days(dayArrays, nBets = 5) {
-      if (dayArrays.length < 3) throw new Error("Cáº§n Ä‘á»§ 3 ngÃ y trÆ°á»›c.");
+      if (dayArrays.length < 3) throw new Error("Cần đủ 3 ngày trước.");
       const freq = new Map();
       dayArrays.forEach(arr => {
         arr.forEach(n => {
@@ -266,7 +273,7 @@
       if (freq.size === 0) return sample(range(100), nBets);
 
       const items = Array.from(freq.entries());
-      shuffle(items); // tie-break ngáº«u nhiÃªn
+      shuffle(items); // tie-break ngẫu nhiên
       items.sort((a, b) => b[1] - a[1]);
 
       let picks = items.slice(0, nBets).map(([n]) => n);
@@ -380,9 +387,9 @@
         const arrD2 = extractNumsForDate(wb, d2);
         const arrD1 = extractNumsForDate(wb, d1);
         const statusParts = [
-          `D-3: ${arrD3.length} sá»‘`,
-          `D-2: ${arrD2.length} sá»‘`,
-          `D-1: ${arrD1.length} sá»‘`,
+          `D-3: ${arrD3.length} số`,
+          `D-2: ${arrD2.length} số`,
+          `D-1: ${arrD1.length} số`,
         ];
 
         if (arrD3.length) inputD3.value = toTextareaString(arrD3);
@@ -405,7 +412,7 @@
       updateLabels();
       const d = parseDateDDMMYYYY(inputDate.value);
       if (!d) {
-        setOutput("Sai Ä‘á»‹nh dáº¡ng ngÃ y, dÃ¹ng dd/mm/yyyy.");
+        setOutput("Sai định dạng ngày, dạng dd/mm/yyyy.");
         return;
       }
 
@@ -418,7 +425,7 @@
       if (!arrD2.length) missing.push("D-2");
       if (!arrD3.length) missing.push("D-3");
       if (missing.length) {
-        setOutput(`Thiáº¿u dá»¯ liá»‡u: ${missing.join(", ")}. HÃ£y nháº­p sá»‘ cho Ä‘á»§ 3 ngÃ y trÆ°á»›c.`);
+        setOutput(`Thiếu dữ liệu: ${missing.join(", ")}. Hãy nhập số cho đủ 3 ngày trước.`);
         return;
       }
 
@@ -426,13 +433,13 @@
       const picksFmt = picks.map(n => String(n).padStart(2, "0")).join(", ");
 
       const lines = [
-        `NgÃ y ${formatDDMMYYYY(d)} Ä‘á» xuáº¥t 5 cáº·p:`,
+        `Ngày ${formatDDMMYYYY(d)} đề xuất 5 cặp:`,
         picksFmt,
         "",
-        "Nguá»“n dá»¯ liá»‡u:",
-        `- D-3 ${labelD3.textContent.replace(":", "")} (${arrD3.length} sá»‘)`,
-        `- D-2 ${labelD2.textContent.replace(":", "")} (${arrD2.length} sá»‘)`,
-        `- D-1 ${labelD1.textContent.replace(":", "")} (${arrD1.length} sá»‘)`,
+        "Nguồn dữ liệu:",
+        `- D-3 ${labelD3.textContent.replace(":", "")} (${arrD3.length} số)`,
+        `- D-2 ${labelD2.textContent.replace(":", "")} (${arrD2.length} số)`,
+        `- D-1 ${labelD1.textContent.replace(":", "")} (${arrD1.length} số)`,
       ];
       setOutput(lines.join("\n"));
     }
@@ -457,10 +464,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
