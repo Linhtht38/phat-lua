@@ -74,6 +74,7 @@
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .small-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <h1> Gợi ý 5 cặp Thịt SXMT</h1>
@@ -105,6 +106,13 @@
         <textarea id="input-d1" placeholder="vd: 05, 12 44 77 99"></textarea>
       </div>
       <p class="small-note">Nhập số 2 chữ số, cách nhau bằng dấu phẩy/khoảng trắng/dòng mới. Ví dụ: 01,02 15 99</p>
+
+      <h2 style="margin-top:12px;">Nạp nhanh từ Excel GitHub</h2>
+      <label for="excel-url">Raw URL file xsmt_daily_duoi2so.xlsx:</label>
+      <input type="text" id="excel-url" placeholder="https://raw.githubusercontent.com/.../xsmt_daily_duoi2so.xlsx" value="https://raw.githubusercontent.com/your/repo/main/xsmt_daily_duoi2so.xlsx" />
+      <p class="small-note" id="excel-status">Tải trực tiếp từ raw GitHub, tự đổ D-3/D-2/D-1 theo ngày mục tiêu.</p>
+      <button id="btn-load-excel" style="margin-top:8px;">Nạp Excel 3 ngày</button>
+
       <button id="btn-run" style="margin-top:12px;">Tính 5 cặp</button>
     </div>
 
@@ -161,6 +169,49 @@
       return copy.slice(0, k);
     }
 
+    function toTextareaString(arr) {
+      return arr.map(n => String(n).padStart(2, "0")).join(" ");
+    }
+
+    async function fetchExcel(url) {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`Tải Excel lỗi (${resp.status})`);
+      const ab = await resp.arrayBuffer();
+      return XLSX.read(ab, { type: "array" });
+    }
+
+    function extractNumsForDate(wb, date) {
+      const sheetName = String(date.getFullYear());
+      const ws = wb.Sheets[sheetName];
+      if (!ws) return [];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+      const target = formatDDMMYYYY(date);
+
+      let start = -1;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i] || [];
+        if (r[0] === "Kết quả XSMT" && String(r[1]).trim() === target) {
+          start = i;
+          break;
+        }
+      }
+      if (start === -1) return [];
+
+      const nums = [];
+      for (let i = start + 2; i < rows.length; i++) {
+        const r = rows[i] || [];
+        if (r[0] === "Kết quả XSMT") break;
+        if (r[0] === "ĐB") continue; // bỏ dòng nhãn ĐB, số đã nằm ở dòng ngay trước đó
+        for (let c = 1; c < r.length; c++) {
+          const v = r[c];
+          if (v === undefined || v === null || v === "") continue;
+          const n = parseInt(v, 10);
+          if (!Number.isNaN(n)) nums.push(((n % 100) + 100) % 100);
+        }
+      }
+      return nums;
+    }
+
     // Core logic: tần suất 3 ngày (manual-only)
     function pick5ByFreq3Days(dayArrays, nBets = 5) {
       if (dayArrays.length < 3) throw new Error("Cần đủ 3 ngày trước.");
@@ -199,6 +250,15 @@
     const inputD3 = document.getElementById("input-d3");
     const output = document.getElementById("output");
     const btnRun = document.getElementById("btn-run");
+    const excelUrlInput = document.getElementById("excel-url");
+    const excelStatus = document.getElementById("excel-status");
+    const btnLoadExcel = document.getElementById("btn-load-excel");
+
+    function setExcelStatus(text, isError = false) {
+      if (!excelStatus) return;
+      excelStatus.textContent = text;
+      excelStatus.style.color = isError ? "#fca5a5" : "var(--muted)";
+    }
 
     function updateLabels() {
       const d = parseDateDDMMYYYY(inputDate.value);
@@ -220,6 +280,51 @@
 
     function setOutput(text) {
       output.value = text;
+    }
+
+    async function onLoadExcel() {
+      if (!excelUrlInput) return;
+      const url = excelUrlInput.value.trim();
+      if (!url) {
+        setExcelStatus("Nhập raw URL file Excel trên GitHub.", true);
+        return;
+      }
+
+      const d = parseDateDDMMYYYY(inputDate.value);
+      if (!d) {
+        setExcelStatus("Ngày mục tiêu sai định dạng dd/mm/yyyy.", true);
+        return;
+      }
+
+      setExcelStatus("Đang tải Excel...");
+      const d1 = new Date(d); d1.setDate(d1.getDate() - 1);
+      const d2 = new Date(d); d2.setDate(d2.getDate() - 2);
+      const d3 = new Date(d); d3.setDate(d3.getDate() - 3);
+
+      try {
+        const wb = await fetchExcel(url);
+        const arrD3 = extractNumsForDate(wb, d3);
+        const arrD2 = extractNumsForDate(wb, d2);
+        const arrD1 = extractNumsForDate(wb, d1);
+        const statusParts = [
+          `D-3: ${arrD3.length} số`,
+          `D-2: ${arrD2.length} số`,
+          `D-1: ${arrD1.length} số`,
+        ];
+
+        if (arrD3.length) inputD3.value = toTextareaString(arrD3);
+        if (arrD2.length) inputD2.value = toTextareaString(arrD2);
+        if (arrD1.length) inputD1.value = toTextareaString(arrD1);
+
+        if (!arrD1.length && !arrD2.length && !arrD3.length) {
+          setExcelStatus("Không thấy dữ liệu 3 ngày trong file. Nhập tay giúp nhé.", true);
+        } else {
+          setExcelStatus(`Đã nạp từ Excel (${statusParts.join(", ")}). Kiểm tra lại trước khi tính.`);
+        }
+        updateLabels();
+      } catch (err) {
+        setExcelStatus(`Lỗi nạp Excel: ${err.message}`, true);
+      }
     }
 
     function onRun() {
@@ -261,6 +366,7 @@
     inputDate.addEventListener("keyup", updateLabels);
     inputDate.addEventListener("change", updateLabels);
     inputDate.addEventListener("blur", updateLabels);
+    if (btnLoadExcel) btnLoadExcel.addEventListener("click", onLoadExcel);
     btnRun.addEventListener("click", onRun);
     document.getElementById("btn-index").addEventListener("click", () => {
       window.location.href = "index.html";
