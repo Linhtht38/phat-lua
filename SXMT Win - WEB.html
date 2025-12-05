@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gợi ý 5 cặp (nhập tay 3 ngày trước)</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #101827;
+      --border: #1f2937;
+      --accent: #22d3ee;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #000;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    h1 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0.2px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 14px;
+      align-items: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .card h2 { margin: 0 0 10px; font-size: 17px; color: var(--accent); }
+    label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--muted); }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0c1423;
+      color: var(--text);
+    }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0c1423;
+      color: var(--text);
+      resize: vertical;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 13px;
+    }
+    button {
+      padding: 12px;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--accent);
+      background: rgba(34,211,238,0.12);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+    button:hover { background: rgba(34,211,238,0.2); transform: translateY(-1px); }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .small-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1> Gợi ý 5 cặp Thịt SXMT</h1>
+  <p class="muted" style="margin: 0 0 12px;">
+    <button id="btn-index" style="width:auto;padding:8px 12px;border-radius:8px;margin-right:8px;">Thịt SXMN</button>
+    Bấm để chuyển sang trang Thịt SXMN
+  </p>
+  <div class="layout">
+    <div class="card">
+      <h2>Nhập ngày mục tiêu</h2>
+      <label for="target-date">Ngày (dd/mm/yyyy):</label>
+      <input type="text" id="target-date" placeholder="vd: 10/05/2025" value="10/05/2025" />
+      <p class="muted" id="date-helper">D-1: ?, D-2: ?, D-3: ?</p>
+      <p class="muted">Không đọc Excel. Bạn nhập tay kết quả 3 ngày trước theo đúng ngày hiển thị.</p>
+
+      <h2 style="margin-top:12px;">Nhập tay 3 ngày trước</h2>
+      <div class="grid2">
+        <div>
+          <label id="label-d3" for="input-d3">D-3:</label>
+          <textarea id="input-d3" placeholder="vd: 01,02 15 99"></textarea>
+        </div>
+        <div>
+          <label id="label-d2" for="input-d2">D-2:</label>
+          <textarea id="input-d2" placeholder="vd: 03 17 58 90"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <label id="label-d1" for="input-d1">D-1:</label>
+        <textarea id="input-d1" placeholder="vd: 05, 12 44 77 99"></textarea>
+      </div>
+      <p class="small-note">Nhập số 2 chữ số, cách nhau bằng dấu phẩy/khoảng trắng/dòng mới. Ví dụ: 01,02 15 99</p>
+      <button id="btn-run" style="margin-top:12px;">Tính 5 cặp</button>
+    </div>
+
+    <div class="card">
+      <h2>Kết quả</h2>
+      <textarea id="output" readonly>Nhập ngày và 3 ngày trước, rồi bấm "Tính 5 cặp".</textarea>
+    </div>
+  </div>
+
+  <script>
+    // ===== Helpers =====
+    function parseDateDDMMYYYY(str) {
+      const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str.trim());
+      if (!m) return null;
+      const d = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      const y = parseInt(m[3], 10);
+      const date = new Date(y, mo - 1, d);
+      if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+      return date;
+    }
+
+    function formatDDMMYYYY(date) {
+      const d = String(date.getDate()).padStart(2, "0");
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    }
+
+    function parseNums(raw) {
+      if (!raw || !raw.trim()) return [];
+      return raw
+        .split(/[^0-9]+/)
+        .filter(Boolean)
+        .map(x => parseInt(x, 10) % 100)
+        .filter(n => !Number.isNaN(n));
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function range(n) {
+      return Array.from({ length: n }, (_, i) => i);
+    }
+
+    function sample(arr, k) {
+      const copy = arr.slice();
+      shuffle(copy);
+      return copy.slice(0, k);
+    }
+
+    // Core logic: tần suất 3 ngày (manual-only)
+    function pick5ByFreq3Days(dayArrays, nBets = 5) {
+      if (dayArrays.length < 3) throw new Error("Cần đủ 3 ngày trước.");
+      const freq = new Map();
+      dayArrays.forEach(arr => {
+        arr.forEach(n => {
+          const num = ((n % 100) + 100) % 100;
+          freq.set(num, (freq.get(num) || 0) + 1);
+        });
+      });
+
+      if (freq.size === 0) return sample(range(100), nBets);
+
+      const items = Array.from(freq.entries());
+      shuffle(items); // tie-break ngẫu nhiên
+      items.sort((a, b) => b[1] - a[1]);
+
+      let picks = items.slice(0, nBets).map(([n]) => n);
+      if (picks.length < nBets) {
+        const used = new Set(picks);
+        const candidates = range(100).filter(x => !used.has(x));
+        shuffle(candidates);
+        picks = picks.concat(candidates.slice(0, nBets - picks.length));
+      }
+      return picks;
+    }
+
+    // ===== UI handling =====
+    const inputDate = document.getElementById("target-date");
+    const labelD1 = document.getElementById("label-d1");
+    const labelD2 = document.getElementById("label-d2");
+    const labelD3 = document.getElementById("label-d3");
+    const helper = document.getElementById("date-helper");
+    const inputD1 = document.getElementById("input-d1");
+    const inputD2 = document.getElementById("input-d2");
+    const inputD3 = document.getElementById("input-d3");
+    const output = document.getElementById("output");
+    const btnRun = document.getElementById("btn-run");
+
+    function updateLabels() {
+      const d = parseDateDDMMYYYY(inputDate.value);
+      if (!d) {
+        labelD1.textContent = "D-1:";
+        labelD2.textContent = "D-2:";
+        labelD3.textContent = "D-3:";
+        helper.textContent = "D-1: ?, D-2: ?, D-3: ?";
+        return;
+      }
+      const d1 = new Date(d); d1.setDate(d1.getDate() - 1);
+      const d2 = new Date(d); d2.setDate(d2.getDate() - 2);
+      const d3 = new Date(d); d3.setDate(d3.getDate() - 3);
+      labelD1.textContent = `D-1 ${formatDDMMYYYY(d1)}:`;
+      labelD2.textContent = `D-2 ${formatDDMMYYYY(d2)}:`;
+      labelD3.textContent = `D-3 ${formatDDMMYYYY(d3)}:`;
+      helper.textContent = `D-1: ${formatDDMMYYYY(d1)}, D-2: ${formatDDMMYYYY(d2)}, D-3: ${formatDDMMYYYY(d3)}`;
+    }
+
+    function setOutput(text) {
+      output.value = text;
+    }
+
+    function onRun() {
+      updateLabels();
+      const d = parseDateDDMMYYYY(inputDate.value);
+      if (!d) {
+        setOutput("Sai định dạng ngày, dùng dd/mm/yyyy.");
+        return;
+      }
+
+      const arrD1 = parseNums(inputD1.value);
+      const arrD2 = parseNums(inputD2.value);
+      const arrD3 = parseNums(inputD3.value);
+
+      const missing = [];
+      if (!arrD1.length) missing.push("D-1");
+      if (!arrD2.length) missing.push("D-2");
+      if (!arrD3.length) missing.push("D-3");
+      if (missing.length) {
+        setOutput(`Thiếu dữ liệu: ${missing.join(", ")}. Hãy nhập số cho đủ 3 ngày trước.`);
+        return;
+      }
+
+      const picks = pick5ByFreq3Days([arrD3, arrD2, arrD1], 5);
+      const picksFmt = picks.map(n => String(n).padStart(2, "0")).join(", ");
+
+      const lines = [
+        `Ngày ${formatDDMMYYYY(d)} đề xuất 5 cặp:`,
+        picksFmt,
+        "",
+        "Nguồn dữ liệu:",
+        `- D-3 ${labelD3.textContent.replace(":", "")} (${arrD3.length} số)`,
+        `- D-2 ${labelD2.textContent.replace(":", "")} (${arrD2.length} số)`,
+        `- D-1 ${labelD1.textContent.replace(":", "")} (${arrD1.length} số)`,
+      ];
+      setOutput(lines.join("\n"));
+    }
+
+    inputDate.addEventListener("keyup", updateLabels);
+    inputDate.addEventListener("change", updateLabels);
+    inputDate.addEventListener("blur", updateLabels);
+    btnRun.addEventListener("click", onRun);
+    document.getElementById("btn-index").addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    updateLabels();
+  </script>
+</body>
+</html>
