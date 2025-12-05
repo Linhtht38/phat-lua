@@ -22,12 +22,15 @@
       min-height: 100vh;
       padding: 18px;
     }
-    h1 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0.2px; }
+    h1 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0.2px; text-align: center; }
     .layout {
       display: grid;
-      grid-template-columns: 1fr 360px;
+      grid-template-columns: 1fr;
       gap: 14px;
       align-items: start;
+      max-width: 520px;
+      margin: 0 auto;
+      width: 100%;
     }
     .card {
       background: var(--panel);
@@ -48,7 +51,7 @@
     }
     textarea {
       width: 100%;
-      min-height: 140px;
+      min-height: 120px;
       padding: 10px;
       border-radius: 8px;
       border: 1px solid var(--border);
@@ -73,37 +76,74 @@
     .muted { color: var(--muted); font-size: 13px; line-height: 1.4; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .small-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(56,189,248,0.16);
+      color: #e0f2fe;
+      border: 1px solid rgba(56,189,248,0.7);
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+    .pill:hover { transform: translateY(-1px); background: rgba(56,189,248,0.24); }
+    .pill.active { background: rgba(56,189,248,0.32); border-color: rgba(56,189,248,0.9); color: #f8fafc; }
+    .pill.ready { background: rgba(34,197,94,0.3); border-color: rgba(34,197,94,0.85); color: #dcfce7; }
+    .pill .count {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #bae6fd;
+      border: 1px solid rgba(56,189,248,0.5);
+    }
+    .pill.ready .count { color: #bbf7d0; border-color: rgba(34,197,94,0.7); }
+    .collapsible { display: none; margin-top: 8px; }
+    .collapsible.open { display: block; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
+
 <body>
-  <h1> Gợi ý 5 cặp Thịt SXMT</h1>
-  <p class="muted" style="margin: 0 0 12px;">
-    <button id="btn-index" style="width:auto;padding:8px 12px;border-radius:8px;margin-right:8px;">Thịt SXMN</button>
-    Bấm để chuyển sang trang Thịt SXMN
-  </p>
+  <h1>Gợi ý 5 cặp Thống kê SXMT</h1>
   <div class="layout">
+    <div class="card">
+      <button id="btn-index">Thống kê SXMN</button>
+    </div>
+
     <div class="card">
       <h2>Nhập ngày mục tiêu</h2>
       <label for="target-date">Ngày (dd/mm/yyyy):</label>
       <input type="text" id="target-date" placeholder="vd: 10/05/2025" value="10/05/2025" />
       <p class="muted" id="date-helper">D-1: ?, D-2: ?, D-3: ?</p>
-      <p class="muted">Không đọc Excel. Bạn nhập tay kết quả 3 ngày trước theo đúng ngày hiển thị.</p>
+      <p class="muted">Không dùng Excel. Bạn nhập tay kết quả 3 ngày trước theo đúng ngày hiển thị.</p>
 
       <h2 style="margin-top:12px;">Nhập tay 3 ngày trước</h2>
       <div class="grid2">
         <div>
-          <label id="label-d3" for="input-d3">D-3:</label>
-          <textarea id="input-d3" placeholder="vd: 01,02 15 99"></textarea>
+          <button class="pill" id="btn-d3" type="button">D-3 <span class="count" id="count-d3">0</span></button>
+          <div class="collapsible" id="panel-d3">
+            <label id="label-d3" for="input-d3">D-3:</label>
+            <textarea id="input-d3" placeholder="vd: 01,02 15 99"></textarea>
+          </div>
         </div>
         <div>
-          <label id="label-d2" for="input-d2">D-2:</label>
-          <textarea id="input-d2" placeholder="vd: 03 17 58 90"></textarea>
+          <button class="pill" id="btn-d2" type="button">D-2 <span class="count" id="count-d2">0</span></button>
+          <div class="collapsible" id="panel-d2">
+            <label id="label-d2" for="input-d2">D-2:</label>
+            <textarea id="input-d2" placeholder="vd: 03 17 58 90"></textarea>
+          </div>
         </div>
       </div>
       <div style="margin-top:10px;">
-        <label id="label-d1" for="input-d1">D-1:</label>
-        <textarea id="input-d1" placeholder="vd: 05, 12 44 77 99"></textarea>
+        <button class="pill" id="btn-d1" type="button">D-1 <span class="count" id="count-d1">0</span></button>
+        <div class="collapsible" id="panel-d1">
+          <label id="label-d1" for="input-d1">D-1:</label>
+          <textarea id="input-d1" placeholder="vd: 05, 12 44 77 99"></textarea>
+        </div>
       </div>
       <p class="small-note">Nhập số 2 chữ số, cách nhau bằng dấu phẩy/khoảng trắng/dòng mới. Ví dụ: 01,02 15 99</p>
 
@@ -190,7 +230,7 @@
       let start = -1;
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i] || [];
-        if (r[0] === "Kết quả XSMT" && String(r[1]).trim() === target) {
+        if (r[0] === "Káº¿t quáº£ XSMT" && String(r[1]).trim() === target) {
           start = i;
           break;
         }
@@ -200,8 +240,8 @@
       const nums = [];
       for (let i = start + 2; i < rows.length; i++) {
         const r = rows[i] || [];
-        if (r[0] === "Kết quả XSMT") break;
-        if (r[0] === "ĐB") continue; // bỏ dòng nhãn ĐB, số đã nằm ở dòng ngay trước đó
+        if (r[0] === "Káº¿t quáº£ XSMT") break;
+        if (r[0] === "ÄB") continue; // bá» dÃ²ng nhÃ£n ÄB, sá»‘ Ä‘Ã£ náº±m á»Ÿ dÃ²ng ngay trÆ°á»›c Ä‘Ã³
         for (let c = 1; c < r.length; c++) {
           const v = r[c];
           if (v === undefined || v === null || v === "") continue;
@@ -212,9 +252,9 @@
       return nums;
     }
 
-    // Core logic: tần suất 3 ngày (manual-only)
+    // Core logic: táº§n suáº¥t 3 ngÃ y (manual-only)
     function pick5ByFreq3Days(dayArrays, nBets = 5) {
-      if (dayArrays.length < 3) throw new Error("Cần đủ 3 ngày trước.");
+      if (dayArrays.length < 3) throw new Error("Cáº§n Ä‘á»§ 3 ngÃ y trÆ°á»›c.");
       const freq = new Map();
       dayArrays.forEach(arr => {
         arr.forEach(n => {
@@ -226,7 +266,7 @@
       if (freq.size === 0) return sample(range(100), nBets);
 
       const items = Array.from(freq.entries());
-      shuffle(items); // tie-break ngẫu nhiên
+      shuffle(items); // tie-break ngáº«u nhiÃªn
       items.sort((a, b) => b[1] - a[1]);
 
       let picks = items.slice(0, nBets).map(([n]) => n);
@@ -253,11 +293,44 @@
     const excelUrlInput = document.getElementById("excel-url");
     const excelStatus = document.getElementById("excel-status");
     const btnLoadExcel = document.getElementById("btn-load-excel");
+    const btnD1 = document.getElementById("btn-d1");
+    const btnD2 = document.getElementById("btn-d2");
+    const btnD3 = document.getElementById("btn-d3");
+    const panelD1 = document.getElementById("panel-d1");
+    const panelD2 = document.getElementById("panel-d2");
+    const panelD3 = document.getElementById("panel-d3");
+    const countD1 = document.getElementById("count-d1");
+    const countD2 = document.getElementById("count-d2");
+    const countD3 = document.getElementById("count-d3");
 
     function setExcelStatus(text, isError = false) {
       if (!excelStatus) return;
       excelStatus.textContent = text;
       excelStatus.style.color = isError ? "#fca5a5" : "var(--muted)";
+    }
+
+    function togglePanel(btn, panel) {
+      if (!btn || !panel) return;
+      const isOpen = panel.classList.toggle("open");
+      if (isOpen) {
+        panel.classList.add("open");
+        btn.classList.add("active");
+      } else {
+        panel.classList.remove("open");
+        btn.classList.remove("active");
+      }
+    }
+
+    function updateCounts() {
+      const c1 = parseNums(inputD1.value).length;
+      const c2 = parseNums(inputD2.value).length;
+      const c3 = parseNums(inputD3.value).length;
+      if (countD1) countD1.textContent = c1;
+      if (countD2) countD2.textContent = c2;
+      if (countD3) countD3.textContent = c3;
+      if (btnD1) btnD1.classList.toggle("ready", c1 > 0);
+      if (btnD2) btnD2.classList.toggle("ready", c2 > 0);
+      if (btnD3) btnD3.classList.toggle("ready", c3 > 0);
     }
 
     function updateLabels() {
@@ -307,14 +380,15 @@
         const arrD2 = extractNumsForDate(wb, d2);
         const arrD1 = extractNumsForDate(wb, d1);
         const statusParts = [
-          `D-3: ${arrD3.length} số`,
-          `D-2: ${arrD2.length} số`,
-          `D-1: ${arrD1.length} số`,
+          `D-3: ${arrD3.length} sá»‘`,
+          `D-2: ${arrD2.length} sá»‘`,
+          `D-1: ${arrD1.length} sá»‘`,
         ];
 
         if (arrD3.length) inputD3.value = toTextareaString(arrD3);
         if (arrD2.length) inputD2.value = toTextareaString(arrD2);
         if (arrD1.length) inputD1.value = toTextareaString(arrD1);
+        updateCounts();
 
         if (!arrD1.length && !arrD2.length && !arrD3.length) {
           setExcelStatus("Không thấy dữ liệu 3 ngày trong file. Nhập tay giúp nhé.", true);
@@ -331,7 +405,7 @@
       updateLabels();
       const d = parseDateDDMMYYYY(inputDate.value);
       if (!d) {
-        setOutput("Sai định dạng ngày, dùng dd/mm/yyyy.");
+        setOutput("Sai Ä‘á»‹nh dáº¡ng ngÃ y, dÃ¹ng dd/mm/yyyy.");
         return;
       }
 
@@ -344,7 +418,7 @@
       if (!arrD2.length) missing.push("D-2");
       if (!arrD3.length) missing.push("D-3");
       if (missing.length) {
-        setOutput(`Thiếu dữ liệu: ${missing.join(", ")}. Hãy nhập số cho đủ 3 ngày trước.`);
+        setOutput(`Thiáº¿u dá»¯ liá»‡u: ${missing.join(", ")}. HÃ£y nháº­p sá»‘ cho Ä‘á»§ 3 ngÃ y trÆ°á»›c.`);
         return;
       }
 
@@ -352,13 +426,13 @@
       const picksFmt = picks.map(n => String(n).padStart(2, "0")).join(", ");
 
       const lines = [
-        `Ngày ${formatDDMMYYYY(d)} đề xuất 5 cặp:`,
+        `NgÃ y ${formatDDMMYYYY(d)} Ä‘á» xuáº¥t 5 cáº·p:`,
         picksFmt,
         "",
-        "Nguồn dữ liệu:",
-        `- D-3 ${labelD3.textContent.replace(":", "")} (${arrD3.length} số)`,
-        `- D-2 ${labelD2.textContent.replace(":", "")} (${arrD2.length} số)`,
-        `- D-1 ${labelD1.textContent.replace(":", "")} (${arrD1.length} số)`,
+        "Nguá»“n dá»¯ liá»‡u:",
+        `- D-3 ${labelD3.textContent.replace(":", "")} (${arrD3.length} sá»‘)`,
+        `- D-2 ${labelD2.textContent.replace(":", "")} (${arrD2.length} sá»‘)`,
+        `- D-1 ${labelD1.textContent.replace(":", "")} (${arrD1.length} sá»‘)`,
       ];
       setOutput(lines.join("\n"));
     }
@@ -366,6 +440,12 @@
     inputDate.addEventListener("keyup", updateLabels);
     inputDate.addEventListener("change", updateLabels);
     inputDate.addEventListener("blur", updateLabels);
+    if (btnD3 && panelD3) btnD3.addEventListener("click", () => togglePanel(btnD3, panelD3));
+    if (btnD2 && panelD2) btnD2.addEventListener("click", () => togglePanel(btnD2, panelD2));
+    if (btnD1 && panelD1) btnD1.addEventListener("click", () => togglePanel(btnD1, panelD1));
+    if (inputD1) inputD1.addEventListener("input", updateCounts);
+    if (inputD2) inputD2.addEventListener("input", updateCounts);
+    if (inputD3) inputD3.addEventListener("input", updateCounts);
     if (btnLoadExcel) btnLoadExcel.addEventListener("click", onLoadExcel);
     btnRun.addEventListener("click", onRun);
     document.getElementById("btn-index").addEventListener("click", () => {
@@ -373,6 +453,14 @@
     });
 
     updateLabels();
+    updateCounts();
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
